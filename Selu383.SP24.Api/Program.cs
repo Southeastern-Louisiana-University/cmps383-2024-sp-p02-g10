@@ -72,6 +72,15 @@ using (var scope = app.Services.CreateScope())
         await db.SaveChangesAsync();
     }
 
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    var roles = db.Set<Role>();
+    if (!await roles.AnyAsync()) 
+    {
+        await roleManager.CreateAsync(new Role { Name = "Admin" });
+
+        await roleManager.CreateAsync(new Role { Name = "User" });
+    }
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
     var users = db.Set<User>();
     if (!await users.AnyAsync())
@@ -80,18 +89,21 @@ using (var scope = app.Services.CreateScope())
         {
             UserName = "bob"
         }, "Password123!");
+        await userManager.AddToRoleAsync((userManager.FindByNameAsync("bob")).Result!, "User");
 
         await userManager.CreateAsync(new User
         {
             UserName = "sue"
         }, "Password123!");
-        
+
+        await userManager.AddToRoleAsync((userManager.FindByNameAsync("sue")).Result!, "User");
+
         await userManager.CreateAsync(new User
         {
             UserName = "galkadi"
         }, "Password123!");
+        await userManager.AddToRoleAsync((userManager.FindByNameAsync("galkadi")).Result!, "Admin");
     }
-
 
 
     var services = scope.ServiceProvider;
