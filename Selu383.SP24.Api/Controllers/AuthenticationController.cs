@@ -1,5 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection.PortableExecutable;
 
 namespace Selu383.SP24.Api.Controllers
 {
@@ -26,12 +29,26 @@ namespace Selu383.SP24.Api.Controllers
             if (!passwordCheck.Succeeded) {
                 return BadRequest();
             }
+            await signInManager.SignInAsync(user, false);
             var userToLogin = new UserDto
             {
                 Id = user.Id,
                 UserName = user.UserName,
             };
             return Ok(userToLogin);
+        }
+        
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<ActionResult<UserDto>> me()
+        {
+            var user = await userManager.FindByNameAsync(User.Identity?.Name);
+
+            var userToReturn = await (userManager.Users).Select(x => new UserDto 
+            { Id = x.Id, UserName = x.UserName, Roles = x.Roles.Select(role => role.Role!.Name).ToArray()! })
+                .SingleAsync(x => x.UserName == user.UserName);
+
+            return Ok(userToReturn);
         }
     }
 }
