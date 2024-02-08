@@ -20,5 +20,17 @@ public class DataContext : IdentityDbContext<User, Role, int, IdentityUserClaim<
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DataContext).Assembly);
+
+        var userRoleBuilder = modelBuilder.Entity<UserRole>();
+
+        userRoleBuilder.HasKey(x => new { x.UserId, x.RoleId });
+
+        userRoleBuilder.HasOne(x => x.Role)
+            .WithMany(x => x.Users)
+            .HasForeignKey(x => x.RoleId);
+
+        userRoleBuilder.HasOne(x => x.User)
+            .WithMany(x => x.Roles)
+            .HasForeignKey(x => x.UserId);
     }
 }
