@@ -6,6 +6,8 @@ using System.Reflection.PortableExecutable;
 
 namespace Selu383.SP24.Api.Controllers
 {
+    [Route("api/authentication")]
+    [ApiController]
     public class AuthenticationController : Controller
     {
         private readonly SignInManager<User> signInManager;
