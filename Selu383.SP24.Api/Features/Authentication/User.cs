@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Selu383.SP24.Api.Features.Authentication;
 
 public class User : IdentityUser<int>
 {
+    public ICollection<UserRole> Roles { get; set; }
 }
 
 public class UserDto
