@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Selu383.SP24.Api;
 using Selu383.SP24.Api.Data;
@@ -39,9 +40,30 @@ using (var scope = app.Services.CreateScope())
         await db.SaveChangesAsync();
     }
 
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var users = db.Set<User>();
+    if (!await users.AnyAsync())
+    {
+        await userManager.CreateAsync(new User
+        {
+            UserName = "bob"
+        }, "Password123!");
+
+        await userManager.CreateAsync(new User
+        {
+            UserName = "sue"
+        }, "Password123!");
+        
+        await userManager.CreateAsync(new User
+        {
+            UserName = "galkadi"
+        }, "Password123!");
+    }
+
+
+
     var services = scope.ServiceProvider;
 
-    await SeedData.Initialize(services);
 }
 
 // Configure the HTTP request pipeline.
@@ -52,6 +74,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
