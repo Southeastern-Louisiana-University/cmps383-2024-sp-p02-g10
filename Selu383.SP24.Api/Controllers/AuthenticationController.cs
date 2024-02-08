@@ -50,5 +50,13 @@ namespace Selu383.SP24.Api.Controllers
 
             return Ok(userToReturn);
         }
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<ActionResult> logout()
+        {
+            await signInManager.SignOutAsync();
+            return Ok();
+        }
     }
 }
