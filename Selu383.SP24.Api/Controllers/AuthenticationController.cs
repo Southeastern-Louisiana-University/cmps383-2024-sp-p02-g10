@@ -32,12 +32,10 @@ namespace Selu383.SP24.Api.Controllers
                 return BadRequest();
             }
             await signInManager.SignInAsync(user, false);
-            var userToLogin = new UserDto
-            {
-                Id = user.Id,
-                UserName = user.UserName,
-            };
-            return Ok(userToLogin);
+            var userToReturn = await (userManager.Users).Select(x => new UserDto
+            { Id = x.Id, UserName = x.UserName, Roles = x.Roles.Select(role => role.Role!.Name).ToArray()! })
+                .SingleAsync(x => x.UserName == user.UserName);
+            return Ok(userToReturn);
         }
         
         [HttpGet("me")]
