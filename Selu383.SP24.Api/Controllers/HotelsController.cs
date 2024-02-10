@@ -77,26 +77,33 @@ public class HotelsController : ControllerBase
             return BadRequest();
         }
 
-        var hotel = hotels.Include(x => x.Manager).FirstOrDefault(x => x.Id == id);
+        var hotel = hotels.FirstOrDefault(x => x.Id == id);
         if (hotel == null)
         {
             return NotFound();
         }
         var user = await userManager.FindByNameAsync(User.Identity?.Name);
 
-        if (User.IsInRole("Admin") || hotel.Manager.Id == user.Id)
+        if(!(user.Id == hotel.Manager.Id))
         {
-            hotel.Name = dto.Name;
-            hotel.Address = dto.Address;
-            hotel.Manager = dataContext.Users.FirstOrDefault(x => x.Id == dto.ManagerId);
-
-            dataContext.SaveChanges();
-
-            dto.Id = hotel.Id;
-
-            return Ok(dto);
+            if (!User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
         }
-        return Forbid();
+
+        hotel.Name = dto.Name;
+        hotel.Address = dto.Address;
+        if (User.IsInRole("Admin")) 
+        {
+            hotel.Manager = dataContext.Users.FirstOrDefault(x => x.Id == dto.ManagerId);
+        }
+
+        dataContext.SaveChanges();
+
+        dto.Id = hotel.Id;
+
+        return Ok(dto);
     }
 
     [HttpDelete]
