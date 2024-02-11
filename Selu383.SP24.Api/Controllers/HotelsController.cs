@@ -84,20 +84,13 @@ public class HotelsController : ControllerBase
         }
         var user = await userManager.FindByNameAsync(User.Identity?.Name);
 
-        if(!(user.Id == hotel.Manager.Id))
-        {
-            if (!User.IsInRole("Admin"))
-            {
-                return Forbid();
-            }
+        if(!(user.Id == dto.ManagerId) & !(User.IsInRole("Admin"))){
+            return Forbid();
         }
 
         hotel.Name = dto.Name;
         hotel.Address = dto.Address;
-        if (User.IsInRole("Admin")) 
-        {
-            hotel.Manager = dataContext.Users.FirstOrDefault(x => x.Id == dto.ManagerId);
-        }
+        hotel.Manager = dataContext.Users.FirstOrDefault(x => x.Id == dto.ManagerId);
 
         dataContext.SaveChanges();
 
@@ -139,6 +132,7 @@ public class HotelsController : ControllerBase
                 Id = x.Id,
                 Name = x.Name,
                 Address = x.Address,
+                ManagerId = x.Manager!.Id
             });
     }
 }
