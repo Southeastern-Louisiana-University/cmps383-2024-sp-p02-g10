@@ -1,7 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Selu383.SP24.Api.Data;
 using Selu383.SP24.Api.Features.Hotels;
+using Selu383.SP24.Api.Migrations;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Selu383.SP24.Api.Controllers;
 
@@ -11,11 +15,13 @@ public class HotelsController : ControllerBase
 {
     private readonly DbSet<Hotel> hotels;
     private readonly DataContext dataContext;
+    private readonly UserManager<User> userManager;
 
-    public HotelsController(DataContext dataContext)
+    public HotelsController(DataContext dataContext, UserManager<User> userManager)
     {
         this.dataContext = dataContext;
         hotels = dataContext.Set<Hotel>();
+        this.userManager = userManager;
     }
 
     [HttpGet]
@@ -38,6 +44,7 @@ public class HotelsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public ActionResult<HotelDto> CreateHotel(HotelDto dto)
     {
         if (IsInvalid(dto))
@@ -49,6 +56,7 @@ public class HotelsController : ControllerBase
         {
             Name = dto.Name,
             Address = dto.Address,
+            Manager = dataContext.Users.FirstOrDefault(x => x.Id == dto.ManagerId)
         };
         hotels.Add(hotel);
 
@@ -60,8 +68,9 @@ public class HotelsController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize]
     [Route("{id}")]
-    public ActionResult<HotelDto> UpdateHotel(int id, HotelDto dto)
+    public async Task<ActionResult<HotelDto>> UpdateHotel(int id, HotelDto dto)
     {
         if (IsInvalid(dto))
         {
@@ -73,9 +82,15 @@ public class HotelsController : ControllerBase
         {
             return NotFound();
         }
+        var user = await userManager.FindByNameAsync(User.Identity?.Name);
+
+        if(!(user.Id == dto.ManagerId) & !(User.IsInRole("Admin"))){
+            return Forbid();
+        }
 
         hotel.Name = dto.Name;
         hotel.Address = dto.Address;
+        hotel.Manager = dataContext.Users.FirstOrDefault(x => x.Id == dto.ManagerId);
 
         dataContext.SaveChanges();
 
@@ -85,6 +100,7 @@ public class HotelsController : ControllerBase
     }
 
     [HttpDelete]
+    [Authorize(Roles = "Admin")]
     [Route("{id}")]
     public ActionResult DeleteHotel(int id)
     {
@@ -116,6 +132,7 @@ public class HotelsController : ControllerBase
                 Id = x.Id,
                 Name = x.Name,
                 Address = x.Address,
+                ManagerId = x.Manager!.Id
             });
     }
 }
